@@ -7,6 +7,7 @@
   "permissions": [
     "activeTab",
     "storage",
+    "scripting",
     "<all_urls>",
     "*://*/*"
   ],
@@ -33,7 +34,7 @@
   {
     "run_at": "document_end",
     "matches": [
-      "<all_urls>"
+      "https://meet.google.com/*"
     ],
     "js": [
       "js/content-script.js"
