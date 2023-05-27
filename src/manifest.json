@@ -2,17 +2,18 @@
   "manifest_version": 3,
   "name": "__MSG_extName__",
   "homepage_url": "http://localhost:8080/",
-  "description": "A Vueser",
+  "description": "こんにちわMeetの字幕を取得したいですよね",
   "default_locale": "en",
   "permissions": [
     "activeTab",
     "storage",
-    "scripting",
-    "<all_urls>",
-    "*://*/*"
+    "scripting"
+  ],
+  "host_permissions" : [
+    "https://api.notion.com/*"
   ],
   "icons": {
-    "16": "icons/16.png",
+    "18": "icons/18.png",
     "48": "icons/48.png",
     "128": "icons/128.png"
   },
@@ -23,12 +24,12 @@
     "default_popup": "popup.html",
     "default_title": "__MSG_extName__",
     "default_icon": {
-      "19": "icons/19.png",
-      "38": "icons/38.png"
+      "18": "icons/18.png",
+      "48": "icons/48.png"
     }
   },
   "content_security_policy": {
-    "extension_pages": "default-src 'self'; style-src 'self' 'unsafe-inline'"
+    "extension_pages": "default-src 'self'; connect-src 'self' https://api.notion.com"
 },
 "content_scripts": [
   {

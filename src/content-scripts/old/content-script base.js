@@ -2,13 +2,6 @@
 /* eslint-disable no-control-regex */
 /* eslint-disable */
 
-
-
-let myname = "me"
-if(document.getElementsByClassName("ASy21 Duq0Bf").length != 0){
-    myname = document.getElementsByClassName("ASy21 Duq0Bf")[0].title
-}
-console.log(myname);
 //対象のDOMが呼び出されるまで待機
 function waitForElement(selector, callback) {
     let element = document.querySelector(selector);
@@ -35,11 +28,10 @@ function waitForElement(selector, callback) {
 }
 const JimakuMainEle = 'div[jsname="EaZ7Cc"] div[jscontroller="yEvoid"][jsname="NeC6gb"]'; 
 
-waitForElement(JimakuMainEle, async function(element) {
-
-    if(document.querySelector('button[jscontroller="xzbRj"]').innerText == 'closed_caption_off'){
-        document.querySelector('button[jscontroller="xzbRj"]').click() //字幕の設定
-    }
+waitForElement(JimakuMainEle, function(element) {
+    let roomTitle = document.querySelector(JimakuMainEle).textContent;
+    console.log(roomTitle);
+    let downloadDatetime = new Date();
     
     let observerTarget = document.getElementsByClassName("a4cQT")[0];
     // オブザーバの設定
@@ -52,35 +44,7 @@ waitForElement(JimakuMainEle, async function(element) {
     shitreg = "";
     let i = 0;
     let output = {shitreg:"",currentData:"",outputStack:"",username:""};
-    let firstCall = true;
     let observer = new MutationObserver(() => {
-        //初回呼び出しはNotionPage作成
-        if(firstCall){
-            let roomTitle = document.querySelector(JimakuMainEle).textContent;
-            let YMD = yyyymmdd();
-            let meetID = location.pathname.split("/")[1];
-
-            console.log(roomTitle,YMD,meetID,myname);
-            let fileobj ={
-                roomTitle:roomTitle,
-                YMD:YMD,
-                meetID:meetID,
-                writer:myname
-            }
-            chrome.runtime.sendMessage({ type:"create",file:fileobj });
-            // chrome.runtime.sendMessage({ type:"create",file:fileobj }, function (item) {
-            //     // sendMessageのレスポンスが item で取得できるのでそれを使って処理する
-            //     if (!item) {
-            //       return;
-            //     } else {
-            //       if (item.flag) {
-            //         console.log(item.flag);
-            //       }
-            //     }
-            // });
-            firstCall = false;
-        }
-        ////////////
         let isUserName = document.getElementsByClassName("zs7s8d jxFHg")[0];
         if(isUserName != null){
             let shit1Data = kutouten(shitreg);
@@ -94,87 +58,74 @@ waitForElement(JimakuMainEle, async function(element) {
             } else {
                 output.username = userNameText;
             }
-            //ここを会話形式の際に変更しないとな
+
             let newData = kutouten(document.getElementsByClassName("iTTPOb VbkSUe")[0].innerText);
 
             if (shit1Data == "" || newData == ""){
+                // console.log("空データ",shitreg,newData);
             } else if (shit1Data != newData) {
                 console.log(i, newData);
+                // console.log("newData");
                 output.currentData = newData;
-                // console.log("【output】",output)
-                //異なるデータがきている時の処理
+
+                console.log("【output】",output)
                 output = margeMessage(output);
+                // console.log("対象データ",shitreg,newData,tmp);
+            } else {
+                // console.log("例外",shitreg,newData);
             }
             shitreg = newData;
+            // console.log(i, newData);
             i++;
-        } else if(output.shitreg) {
-            //isUserNameがnullでもデータがある場合outputを利用して書き込む
-            let outputStr = output.outputStack + output.shitreg;
-            let userName = output.username;
-            console.log("【転送します】", outputStr)
-            chrome.runtime.sendMessage({ msg:outputStr, userName:userName });
-            // chrome.runtime.sendMessage({ msg:outputStr, userName:userName }, function (item) {
-            //     // sendMessageのレスポンスが item で取得できるのでそれを使って処理する
-            //     if (!item) {
-            //       return;
-            //     } else {
-            //       if (item.flag) {
-            //         console.log(item.flag);
-            //       }
-            //     }
-            //   });
-            output = {shitreg:"",currentData:"",outputStack:"",username:""};
-
         }
     });
     observer.observe(observerTarget, config);
-});
+}
+);
 
 
 function margeMessage(obj){
     let shitreg = obj.shitreg
     let currentData = obj.currentData
     let output = obj.outputStack
-    let userName = obj.username
  
     let shit1Data = kutouten(shitreg);
-    let newData  = kutouten(currentData);
-
-    let shit1Data_remove = removePunctuation(shitreg);
-    let newData_remove  = removePunctuation(currentData);   
+    let newData = kutouten(currentData);
 
     if (shit1Data == ""){
          //特にしょりなし
-    } else if (shit1Data_remove.includes(newData_remove)) {
+    } else if (shit1Data.includes(newData)) {
          //特にしょりなし
-    } else if (check4Characters(shit1Data_remove,newData_remove)) {
-        //初めの４文字が一緒なので一連の文字列である認識、より長い文字列を残す
-        currentData = (shit1Data.length >= newData.length) ? shitreg : currentData;
-
-    } else if (shit1Data_remove != newData_remove) {
+    } else if (shit1Data != newData) {
         let stackText = textDiff(shit1Data, newData);
         if(stackText.statusJIMAKU == "continue"){
             output += stackText.outputText.trim();
         } else {
+            //outputの転送
+            // let tmpText = stackText.outputText;
+            // console.log("転送します",tmpText)
             output += stackText.outputText.trim();
 
-            console.log("【転送します】", output)
-            chrome.runtime.sendMessage({ type:"update",msg:output, userName:userName });
-            // chrome.runtime.sendMessage({ type:"update",msg:output,userName:userName }, function (item) {
-            //     // sendMessageのレスポンスが item で取得できるのでそれを使って処理する
-            //     if (!item) {
-            //       return;
-            //     } else {
-            //       if (item.flag) {
-            //         console.log(item.flag);
-            //       }
-            //     }
-            //   });
+            chrome.runtime.sendMessage({ msg:output }, function (item) {
+                // sendMessageのレスポンスが item で取得できるのでそれを使って処理する
+                if (!item) {
+                  return;
+                } else {
+                  if (item.flag) {
+                    console.log(item.flag);
+                  }
+                }
+              });
+
             //新規作り直し
+            // output = stackText.outputText.trim();
             output = "";
+
         }
 
-    } 
+    } else {
+        // console.log("例外",shitreg,newData);
+    }
     shitreg = newData;
     return {shitreg:currentData, currentData:"",outputStack:output,username:obj.username}
 }
@@ -220,30 +171,9 @@ function kutouten(sentence){// 末尾が句読点である場合は削除する
 function check4Characters(string1, string2) {
     // 文字列の長さが5未満の場合は、一致しないとみなす
     if (string1.length < 4 || string2.length < 4) {
-      return true;
+      return false;
     }
     const Chars1 = string1.substring(0, 4);
     const Chars2 = string2.substring(0, 4);
     return (Chars1 === Chars2);
   }
-
-
-function removePunctuation(text){
-  const punctuationRegex = /[。、！？]/g;
-  const spaceRegex = /\s+/g;
-
-  const removedPunctuation = text.replace(punctuationRegex, "")
-    .replace(spaceRegex, "")
-
-  return removedPunctuation;
-}
-
-function yyyymmdd (){
-    let currentDate = new Date();
-    let year = currentDate.getFullYear();
-    let month = String(currentDate.getMonth() + 1).padStart(2, '0');
-    let day = String(currentDate.getDate()).padStart(2, '0');
-
-    let result = `${year}-${month}-${day}`;
-    return result
-}
