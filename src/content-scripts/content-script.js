@@ -49,7 +49,7 @@ waitForElement(JimakuMainEle, async function(element) {
         childList: true
         };
     // オブザーバインスタンスを作成
-    shitreg = "";
+    let shitreg = "";
     let i = 0;
     let output = {shitreg:"",currentData:"",outputStack:"",username:""};
     let firstCall = true;
@@ -67,39 +67,89 @@ waitForElement(JimakuMainEle, async function(element) {
                 meetID:meetID,
                 writer:myname
             }
-            chrome.runtime.sendMessage({ type:"create",file:fileobj });
-            // chrome.runtime.sendMessage({ type:"create",file:fileobj }, function (item) {
-            //     // sendMessageのレスポンスが item で取得できるのでそれを使って処理する
-            //     if (!item) {
-            //       return;
-            //     } else {
-            //       if (item.flag) {
-            //         console.log(item.flag);
-            //       }
-            //     }
-            // });
+            // chrome.runtime.sendMessage({ type:"create",file:fileobj });
+            chrome.runtime.sendMessage({ type:"create",file:fileobj }, function (item) {
+                // sendMessageのレスポンスが item で取得できるのでそれを使って処理する
+                if (!item) {
+                  return;
+                } else {
+                  if (item.flag) {
+                    console.log(item.flag);
+                  }
+                }
+            });
             firstCall = false;
+        
+            //ついでにchrome.storageのデータクリア
+            chrome.storage.local.get('outputlog', function(result) {
+                chrome.storage.local.set({ 'outputlog': [] }, function() {});
+              });
+            chrome.storage.local.get('all', function(result) {
+                chrome.storage.local.set({ 'all': [] }, function() {});
+            });            
+            
         }
         ////////////
-        let isUserName = document.getElementsByClassName("zs7s8d jxFHg")[0];
+        //テスト修正20230530 
+        //ここを会話形式の際に変更しないとな
+        let tolkerElement = document.getElementsByClassName("TBMuR bj4p3b");
+        let lasttolkerElement = tolkerElement[tolkerElement.length - 1];
+        let isUserName = lasttolkerElement.getElementsByClassName("zs7s8d jxFHg")[0];
         if(isUserName != null){
             let shit1Data = kutouten(shitreg);
-            let userNameText = document.getElementsByClassName("zs7s8d jxFHg")[0].innerText;
+            let userNameText = lasttolkerElement.getElementsByClassName("zs7s8d jxFHg")[0].innerText;
+            let isChangeUser = false;
             if(output.username == userNameText){
                 //特に処理する必要ないけどいつかカウンティングするなら利用
             } else if (output.username != userNameText){
                 //強制的に新スレッドにする処理をいれねば
-                output.username = userNameText;
 
+                let outputStrChangeUser = output.outputStack + output.shitreg;
+                let userNameChangeUser = output.username;
+                console.log("【ユーザー変更のため転送します】", outputStrChangeUser)
+                isChangeUser = true;
+                // chrome.runtime.sendMessage({ msg:outputStrChangeUser, userName:userNameChangeUser });
+                chrome.runtime.sendMessage({ msg:outputStrChangeUser, userName:userNameChangeUser }, function (item) {
+                    // sendMessageのレスポンスが item で取得できるのでそれを使って処理する
+                    if (!item) {
+                      return;
+                    } else {
+                      if (item.flag) {
+                        console.log(item.flag);
+                      }
+                    }
+                  });
+                output = {shitreg:"",currentData:"",outputStack:"",username:userNameText};
             } else {
                 output.username = userNameText;
             }
-            //ここを会話形式の際に変更しないとな
-            let newData = kutouten(document.getElementsByClassName("iTTPOb VbkSUe")[0].innerText);
+            // //テスト修正20230530 
+            // //ここを会話形式の際に変更しないとな
+            // let tolkerElement = document.getElementsByClassName("TBMuR bj4p3b");
+            // let lasttolkerElement = tolkerElement[tolkerElement.length - 1];
+            
+            //最後のtoker
+            let newData = kutouten(lasttolkerElement.getElementsByClassName("iTTPOb VbkSUe")[0].innerText);
+            console.log(i, output.username, newData);
 
-            if (shit1Data == "" || newData == ""){
-            } else if (shit1Data != newData) {
-                console.log(i, newData);
+            //いったん全てのログをchrome.strageにはきだしてみる
+            chrome.storage.local.get('all', function(result) {
+                let data = result.all || []; // キーに関連付けられたデータを取得します（なければ空の配列を作成）
+                let adddata = `${output.username},${newData}\n`
+                data.push(adddata); // 新しい情報を配列に追加します
+              
+                // 更新されたデータを保存する
+                chrome.storage.local.set({ 'all': data }, function() {
+                  // データが正常に保存された場合の処理
+                  console.log("追記されました")
+                });
+              });
+
+            if (newData == ""){//NewDataが処理されない問題用の検証でしょり
+                console.log("呼び出しチェック")
+            // if (shit1Data == "" || newData == ""){
+            } else if (shit1Data != newData || isChangeUser) {
+            
                 output.currentData = newData;
                 // console.log("【output】",output)
                 //異なるデータがきている時の処理
@@ -112,17 +162,17 @@ waitForElement(JimakuMainEle, async function(element) {
             let outputStr = output.outputStack + output.shitreg;
             let userName = output.username;
             console.log("【転送します】", outputStr)
-            chrome.runtime.sendMessage({ msg:outputStr, userName:userName });
-            // chrome.runtime.sendMessage({ msg:outputStr, userName:userName }, function (item) {
-            //     // sendMessageのレスポンスが item で取得できるのでそれを使って処理する
-            //     if (!item) {
-            //       return;
-            //     } else {
-            //       if (item.flag) {
-            //         console.log(item.flag);
-            //       }
-            //     }
-            //   });
+            // chrome.runtime.sendMessage({ msg:outputStr, userName:userName });
+            chrome.runtime.sendMessage({ msg:outputStr, userName:userName }, function (item) {
+                // sendMessageのレスポンスが item で取得できるのでそれを使って処理する
+                if (!item) {
+                  return;
+                } else {
+                  if (item.flag) {
+                    console.log(item.flag);
+                  }
+                }
+              });
             output = {shitreg:"",currentData:"",outputStack:"",username:""};
 
         }
@@ -143,9 +193,11 @@ function margeMessage(obj){
     let shit1Data_remove = removePunctuation(shitreg);
     let newData_remove  = removePunctuation(currentData);   
 
+    //この辺りが悪さをして転送エラーを起こしている気がするのでいったん外し
     if (shit1Data == ""){
          //特にしょりなし
     } else if (shit1Data_remove.includes(newData_remove)) {
+        currentData = shitreg;
          //特にしょりなし
     } else if (check4Characters(shit1Data_remove,newData_remove)) {
         //初めの４文字が一緒なので一連の文字列である認識、より長い文字列を残す
@@ -159,17 +211,30 @@ function margeMessage(obj){
             output += stackText.outputText.trim();
 
             console.log("【転送します】", output)
-            chrome.runtime.sendMessage({ type:"update",msg:output, userName:userName });
-            // chrome.runtime.sendMessage({ type:"update",msg:output,userName:userName }, function (item) {
-            //     // sendMessageのレスポンスが item で取得できるのでそれを使って処理する
-            //     if (!item) {
-            //       return;
-            //     } else {
-            //       if (item.flag) {
-            //         console.log(item.flag);
-            //       }
-            //     }
-            //   });
+            //いったんここで全部chrome.strageにはきだしてみる
+            chrome.storage.local.get('outputlog', function(result) {
+                let data = result.outputlog || []; // キーに関連付けられたデータを取得します（なければ空の配列を作成）
+                let adddata = `${userName},${output}\n`
+                data.push(adddata); // 新しい情報を配列に追加します
+              
+                // 更新されたデータを保存する
+                chrome.storage.local.set({ 'outputlog': data }, function() {
+                  // データが正常に保存された場合の処理
+                  console.log("追記されました")
+                });
+              });
+
+            // chrome.runtime.sendMessage({ type:"update",msg:output, userName:userName });
+            chrome.runtime.sendMessage({ type:"update",msg:output,userName:userName }, function (item) {
+                // sendMessageのレスポンスが item で取得できるのでそれを使って処理する
+                if (!item) {
+                  return;
+                } else {
+                  if (item.flag) {
+                    console.log(item.flag);
+                  }
+                }
+              });
             //新規作り直し
             output = "";
         }
@@ -180,33 +245,38 @@ function margeMessage(obj){
 }
 
 
-function textDiff(pre, post){
-    let concatText = pre + post;
+function textDiff (pre, post) {
+    let pre_trim = pre.trim();
+    let post_trim = post.trim();
+  
+    const concatText = pre_trim + post_trim
     // 正規表現を使用して5文字以上連続して繰り返している部分を検索
-    let regex = /(.{4,})\1/g;
-    let matches = concatText.match(regex);
-    let statusJIMAKU = "";
+    const regex = /(.{4,})\1/g
+    const matches = concatText.match(regex);
+  
+    let statusJIMAKU = ''
     if (matches) {
-      let textlength = (-1)*(matches[0].length) / 2;
-    //   let matchTar = matches[0].substring(0, textlength);
-        outputText = pre.slice(0, textlength);
-        statusJIMAKU = "continue";
+      const textlength = (-1) * (matches[0].length) / 2
+      //   let matchTar = matches[0].substring(0, textlength);
+      outputText = pre_trim.slice(0, textlength)
+      statusJIMAKU = 'continue'
     } else {
-        let concatTextRe = post + pre;
-        let matchesRe = concatTextRe.match(regex);
-        if (matchesRe) {
-         //ロード問題の可能性あるためいったん放置
-
-            statusJIMAKU = "continue";
-            outputText = ""
-
-        } else {
-            outputText = pre;
-            statusJIMAKU = "done";
-        }
+      const concatTextRe = post_trim + pre_trim
+      const matchesRe = concatTextRe.match(regex);
+  
+      if ( matchesRe ) {
+        // リバース一致の場合も同じく抽出
+        // const textlengthRe = (-1) * (matchesRe[0].length) / 2
+        // outputText = post_trim.slice(0, textlengthRe)
+        outputText = "" ;
+        statusJIMAKU = 'continue';
+      } else {
+        outputText = pre
+        statusJIMAKU = 'done'
+      }
     }
-    return {outputText:outputText,statusJIMAKU:statusJIMAKU}
-}
+    return { outputText: outputText, statusJIMAKU: statusJIMAKU }
+  }
     
 function kutouten(sentence){// 末尾が句読点である場合は削除する
     if(sentence){
