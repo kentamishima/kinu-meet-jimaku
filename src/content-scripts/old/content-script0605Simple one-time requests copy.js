@@ -2,7 +2,7 @@
 /* eslint-disable no-control-regex */
 /* eslint-disable */
 
-//どちらにしても、chromeストレージに書き込むんだからpostmsgとかどうでもいいかねという実装
+
 
 let myname = "me"
 if(document.getElementsByClassName("ASy21 Duq0Bf").length != 0){
@@ -67,6 +67,7 @@ waitForElement(JimakuMainEle, async function(element) {
                 meetID:meetID,
                 writer:myname
             }
+            // chrome.runtime.sendMessage({ type:"create",file:fileobj });
             chrome.runtime.sendMessage({ type:"create",file:fileobj }, function (item) {
                 // sendMessageのレスポンスが item で取得できるのでそれを使って処理する
                 if (!item) {
@@ -110,28 +111,42 @@ waitForElement(JimakuMainEle, async function(element) {
                 let userNameChangeUser = output.username;
                 console.log("【ユーザー変更のため転送します】", outputStrChangeUser)
                 isChangeUser = true;
-                chrome.storage.local.get('outputlog', function(result) {
-                  let data = result.outputlog || []; 
-                  let adddata = `${userNameChangeUser},${outputStrChangeUser}\n`
-                  data.push(adddata); 
-                  chrome.storage.local.set({ 'outputlog': data }, function() {
-                  console.log("outputlog_追記されました")
+                // chrome.runtime.sendMessage({ msg:outputStrChangeUser, userName:userNameChangeUser });
+                chrome.runtime.sendMessage({ msg:outputStrChangeUser, userName:userNameChangeUser }, function (item) {
+                    // sendMessageのレスポンスが item で取得できるのでそれを使って処理する
+                    if (!item) {
+                      return;
+                    } else {
+                      if (item.flag) {
+                        console.log(item.flag);
+                      }
+                    }
                   });
-                });
-
                 output = {shitreg:"",currentData:"",outputStack:"",username:userNameText};
             } else {
                 output.username = userNameText;
             }
-
+            // //テスト修正20230530 
+            // //ここを会話形式の際に変更しないとな
+            // let tolkerElement = document.getElementsByClassName("TBMuR bj4p3b");
+            // let lasttolkerElement = tolkerElement[tolkerElement.length - 1];
+            
             //最後のtoker
             let newData = kutouten(lasttolkerElement.getElementsByClassName("iTTPOb VbkSUe")[0].innerText);
             console.log(i, output.username, newData);
 
-            //ついでにchrome.storageのデータクリア
-            chrome.storage.local.clear(function() {
-              console.log("chrome.storage.localの中身がクリアされました");
-            });
+            //いったん全てのログをchrome.strageにはきだしてみる
+            chrome.storage.local.get('all', function(result) {
+                let data = result.all || []; // キーに関連付けられたデータを取得します（なければ空の配列を作成）
+                let adddata = `${output.username},${newData}\n`
+                data.push(adddata); // 新しい情報を配列に追加します
+              
+                // 更新されたデータを保存する
+                chrome.storage.local.set({ 'all': data }, function() {
+                  // データが正常に保存された場合の処理
+                  console.log("all_追記されました")
+                });
+              });
 
             if (newData == ""){//NewDataが処理されない問題用の検証でしょり
                 console.log("呼び出しチェック")
@@ -150,15 +165,17 @@ waitForElement(JimakuMainEle, async function(element) {
             let outputStr = output.outputStack + output.shitreg;
             let userName = output.username;
             console.log("【転送します】", outputStr)
-
-            chrome.storage.local.get('outputlog', function(result) {
-              let data = result.outputlog || []; 
-              let adddata = `${userName},${outputStr}\n`
-              data.push(adddata); 
-              chrome.storage.local.set({ 'outputlog': data }, function() {
-              console.log("outputlog_追記されました")
+            // chrome.runtime.sendMessage({ msg:outputStr, userName:userName });
+            chrome.runtime.sendMessage({ msg:outputStr, userName:userName }, function (item) {
+                // sendMessageのレスポンスが item で取得できるのでそれを使って処理する
+                if (!item) {
+                  return;
+                } else {
+                  if (item.flag) {
+                    console.log(item.flag);
+                  }
+                }
               });
-            });
             output = {shitreg:"",currentData:"",outputStack:"",username:""};
 
         }
@@ -197,13 +214,29 @@ function margeMessage(obj){
             output += stackText.outputText.trim();
 
             console.log("【転送します】", output)
+            //いったんここで全部chrome.strageにはきだしてみる
             chrome.storage.local.get('outputlog', function(result) {
-                let data = result.outputlog || []; 
+                let data = result.outputlog || []; // キーに関連付けられたデータを取得します（なければ空の配列を作成）
                 let adddata = `${userName},${output}\n`
-                data.push(adddata); 
+                data.push(adddata); // 新しい情報を配列に追加します
+              
+                // 更新されたデータを保存する
                 chrome.storage.local.set({ 'outputlog': data }, function() {
-                console.log("outputlog_追記されました")
+                  // データが正常に保存された場合の処理
+                  console.log("outputlog_追記されました")
                 });
+              });
+
+            // chrome.runtime.sendMessage({ type:"update",msg:output, userName:userName });
+            chrome.runtime.sendMessage({ type:"update",msg:output,userName:userName }, function (item) {
+                // sendMessageのレスポンスが item で取得できるのでそれを使って処理する
+                if (!item) {
+                  return;
+                } else {
+                  if (item.flag) {
+                    console.log(item.flag);
+                  }
+                }
               });
             //新規作り直し
             output = "";
@@ -271,6 +304,7 @@ function check4Characters(string1, string2) {
 function removePunctuation(text){
   const punctuationRegex = /[。、！？]/g;
   const spaceRegex = /\s+/g;
+
   const removedPunctuation = text.replace(punctuationRegex, "")
     .replace(spaceRegex, "")
 

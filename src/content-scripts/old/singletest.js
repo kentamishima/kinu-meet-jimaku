@@ -3,15 +3,23 @@
 /* eslint-disable no-control-regex */
 /* eslint-disable */
 
-let log = [  '【太陽】鎌田,ありがとうございます。 はい、でてなるとこの職務内容を満たす ってなるといわゆる 経験者でして、もう ズバッと 監査法人\n,',
-'【太陽】鎌田,ありがとうございます。 はい、でてなるとこの職務内容を満たす ってなるといわゆる 経験者でして、もう ズバッと\n,',
+let log = [
+  "あなた,ロープ 落ちてたなあと 魚もいた こいつを調理できれば話は早いんだけどね。 残念ながら肉が望まれている。 箱も拾った大砲も何かありそうですが、ダメか？\n",
+  "あなた,箱も拾った大砲も何かありそうですが、ダメか？ ブーツの底に詰まってた海藻を入手した。 これを食わされるのか？ 素材ではないなあ ってことだろうね。 ふむ\n",
+  "あなた,箱も拾った大砲も何かありそうですが、ダメか？ ブーツの底に詰まってた海藻を入手した。 これを食わされるのか？ 素材ではないなあ ってことだろうね。 そこら辺調べ直してみるか？\n",
+  "あなた,ブーツの底に詰まってた海藻を入手した。 これを食わされるのか？ 素材ではないなあ ってことだろうね。 そこら辺調べ直してみるか？ うってつけのシャックルがあった。 ロープ\n",
+  "あなた,ブーツの底に詰まってた海藻を入手した。 これを食わされるのか？ 素材ではないなあ ってことだろうね。 そこら辺調べ直してみるか？ うってつけのシャックルがあった。 ープ くっついた\n",
+  "あなた,ブーツの底に詰まってた海藻を入手した。 これを食わされるのか？ 素材ではないなあ ってことだろうね。 そこら辺調べ直してみるか？ うってつけのシャックルがあった。 ープ\n",
+  "あなた,これを食わされるのか？ 素材ではないなあ ってことだろうね。 そこら辺調べ直してみるか？ うってつけのシャックルがあった。 ロープ くっついた。 これは うってつけた？\n",
+  "あなた,これを食わされるのか？ 素材ではないなあ ってことだろうね。 そこら辺調べ直してみるか？ うってつけのシャックルがあった。 ープ くっついた。 これは\n",
+  "あなた,そこら辺調べ直してみるか？ うってつけのシャックルがあった。 ープ くっついた。 これは うってつけた木箱もいけるかな？ 行けたわえ。 あとどうするんだ。 残り かそうと\n",
 ]
 
 let output = {shitreg:"",currentData:"",outputStack:"",username:""};
 let firstCall = true;
 let shitreg = "";
 for(let n=0;n<log.length;n++){
-  // console.log(n,"_____")
+  console.log(n,"_____")
 
   let rawAry = log[n].split(",");
   // console.log("【S_output】",output)
@@ -82,10 +90,13 @@ function margeMessage(obj){
   } else if (shit1Data_remove.includes(newData_remove)) {
     currentData = shitreg;
        //特にしょりなし
+  } else if (newData_remove.includes(shit1Data_remove)) {
+    currentData = currentData;
+        //特にしょりなし
   } else if (check4Characters(shit1Data_remove,newData_remove)) {
       //初めの４文字が一緒なので一連の文字列である認識、より長い文字列を残す
       currentData = (shit1Data.length >= newData.length) ? shitreg : currentData;
-
+      console.log("【check4Characters】",currentData)
   } else if (shit1Data_remove != newData_remove) {
       let stackText = textDiff(shit1Data, newData);
       if(stackText.statusJIMAKU == "continue"){
